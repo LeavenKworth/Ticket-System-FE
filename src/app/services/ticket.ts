@@ -40,5 +40,15 @@ export class TicketService {
     const headers = this.getAuthHeaders();
     return this.http.get<Ticket>(`${this.apiUrl}/${id}`, { headers });
   }
+  updateTicketStatus(ticketId: number, newStatus: string): Observable<any> {
+    const headers = this.getAuthHeaders();
+    const body = { status: newStatus };
+    return this.http.patch(`${this.apiUrl}/${ticketId}`, body, { headers });
+  }
+
+  getTicketsAssignedToSupportUser(supportUserId: number): Observable<Ticket[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<Ticket[]>(`${this.apiUrl}/assigned/${supportUserId}`, { headers });
+  }
 
 }

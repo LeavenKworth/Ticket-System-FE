@@ -11,7 +11,8 @@
   import {AdminUsersComponent} from './admin-dashboard.component/admin-users/admin-users';
   import {AdminTickets} from './admin-dashboard.component/admin-tickets/admin-tickets';
   import {AdminUsersDetailComponent} from './admin-dashboard.component/admin-users/admin-users-detail/admin-users-detail';
-  import {AdminTicketDetail} from './admin-dashboard.component/admin-tickets/admin-tickets-detail/admin-tickets-detail';
+  import {AdminTicketsDetail} from './admin-dashboard.component/admin-tickets/admin-tickets-detail/admin-tickets-detail';
+  import {SupportTicketDetailComponent} from './support-dashboard.component/ticket-detail/ticket-detail';
 
   export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -22,8 +23,8 @@
     { path: 'client/ticket-detail/:id', component: TicketDetailComponent, canActivate: [clientGuard] },
     { path: "admin/users", component: AdminUsersComponent, canActivate: [adminGuard] },
     { path: "admin/tickets", component: AdminTickets, canActivate: [adminGuard] },
-    { path: "admin/ticket-detail/:id", component: AdminTicketDetail
-      , canActivate: [adminGuard] },
+    { path: "admin/ticket-detail/:id", component: AdminTicketsDetail, canActivate: [adminGuard] },
     { path: "admin/user-detail/:id", component: AdminUsersDetailComponent, canActivate: [adminGuard] },
+    {path: "support/ticket-detail/:id", component: SupportTicketDetailComponent, canActivate: [supportGuard] },
     { path: '', redirectTo: 'login', pathMatch: 'full' },
   ];

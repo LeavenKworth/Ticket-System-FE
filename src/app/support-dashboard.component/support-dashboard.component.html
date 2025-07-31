@@ -1,1 +1,80 @@
-<p>support-dashboard.component works!</p>
+<div class="p-8 max-w-6xl mx-auto">
+  <h1 class="text-3xl font-bold mb-6 text-indigo-600">Ticket Listesi</h1>
+
+  <div *ngIf="loading" class="text-gray-400">Yükleniyor...</div>
+  <div *ngIf="errorMessage" class="text-red-500 mb-4">{{ errorMessage }}</div>
+
+
+  <div class="mb-6 flex flex-wrap items-center space-x-3">
+    <label for="filterField" class="font-semibold">Filtreleme Kriteri:</label>
+    <select
+      id="filterField"
+      [(ngModel)]="filterField"
+      (ngModelChange)="applyFilter()"
+      class="border rounded px-3 py-1"
+    >
+      <option value="title">Başlığa Göre</option>
+      <option value="status">Duruma Göre</option>
+      <option value="createdBy">Oluşturana Göre</option>
+      <option value="date">Tarihe Göre</option>
+    </select>
+
+    <input
+      *ngIf="filterField !== 'date'"
+      type="text"
+      placeholder="Filtre kelimesi girin"
+      [(ngModel)]="filterValue"
+      (ngModelChange)="applyFilter()"
+      class="border rounded px-3 py-1"
+      style="min-width: 220px;"
+    />
+
+    <div *ngIf="filterField === 'date'" class="flex items-center space-x-2">
+      <input
+        type="date"
+        [(ngModel)]="startDate"
+        (ngModelChange)="applyFilter()"
+        class="border rounded px-2 py-1"
+        placeholder="Başlangıç Tarihi"
+      />
+      <span>-</span>
+      <input
+        type="date"
+        [(ngModel)]="endDate"
+        (ngModelChange)="applyFilter()"
+        class="border rounded px-2 py-1"
+        placeholder="Bitiş Tarihi"
+      />
+    </div>
+  </div>
+
+  <!-- Tablo -->
+  <table *ngIf="!loading && filteredTickets.length > 0" class="min-w-full border rounded-lg shadow">
+    <thead class="bg-gray-100">
+    <tr>
+      <th class="p-3 text-left">Oluşturan</th>
+      <th class="p-3 text-left">Başlık</th>
+      <th class="p-3 text-left">Durum</th>
+      <th class="p-3 text-left">Oluşturma Tarihi</th>
+      <th class="p-3 text-left">İşlem</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let ticket of filteredTickets" class="border-b hover:bg-gray-50">
+      <td class="p-3">{{ ticket.createdBy }}</td>
+      <td class="p-3">{{ ticket.title }}</td>
+      <td class="p-3">{{ ticket.status }}</td>
+      <td class="p-3">{{ ticket.createdAt | date: 'short' }}</td>
+      <td class="p-3">
+        <button (click)="goToDetail(ticket.id)" class="text-blue-600 hover:underline">
+          Detay
+        </button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && filteredTickets.length === 0" class="text-gray-500 italic mt-6">
+    Kriterlere uyan ticket bulunamadı.
+  </div>
+</div>

@@ -26,13 +26,27 @@ export class AdminTicketsDetail implements OnInit {
   loading: boolean = false;
   error: string = '';
 
-  userNames = new Map<number, string>();  // userId -> userName eşlemesi için map
+  userNames = new Map<number, string>(); // userId → userName map
+
+  selectedStatus: string = '';
+
+  statusDisplayMap: Record<string, string> = {
+    Open: 'Açık',
+    Inprogress: 'İşleniyor',
+    Closed: 'Kapalı',
+  };
+
+  statusApiMap: Record<string, string> = {
+    Açık: 'Open',
+    İşleniyor: 'Inprogress',
+    Kapalı: 'Closed',
+  };
 
   constructor(
     private route: ActivatedRoute,
     private ticketService: TicketService,
     private commentService: TicketCommentsService,
-    private userService: UserService // user servisi eklenmeli
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -50,6 +64,8 @@ export class AdminTicketsDetail implements OnInit {
       next: (ticket) => {
         this.ticket = ticket;
         this.error = '';
+        // backend durumdan frontend seçime dönüştür
+        this.selectedStatus = this.statusDisplayMap[ticket.status] || ticket.status;
       },
       error: () => (this.error = 'Ticket bilgisi yüklenemedi.'),
     });
@@ -67,21 +83,17 @@ export class AdminTicketsDetail implements OnInit {
   }
 
   async loadUserNamesForComments(comments: TicketComment[]) {
-    // Tüm unique userId'leri al
-    const uniqueUserIds = Array.from(new Set(comments.map(c => c.userId)));
+    const uniqueUserIds = Array.from(new Set(comments.map((c) => c.userId)));
+    const userIdsToFetch = uniqueUserIds.filter((id) => !this.userNames.has(id));
 
-    // Daha önce yüklenmemiş userId'leri filtrele
-    const userIdsToFetch = uniqueUserIds.filter(id => !this.userNames.has(id));
-
-    const userPromises = userIdsToFetch.map(id =>
+    const userPromises = userIdsToFetch.map((id) =>
       firstValueFrom(this.userService.getUserById(id)).catch(() => null)
     );
 
     const users = await Promise.all(userPromises);
 
-    users.forEach(user => {
+    users.forEach((user) => {
       if (user) {
-
         this.userNames.set(user.id, user.name || 'Anonim');
       }
     });
@@ -103,12 +115,30 @@ export class AdminTicketsDetail implements OnInit {
       next: (comment) => {
         this.comments.push(comment);
         this.newComment = '';
-        this.isInternal = false; // opsiyon sıfırlanabilir
+        this.isInternal = false;
         this.loading = false;
       },
       error: () => {
         this.error = 'Yorum gönderilemedi.';
         this.loading = false;
+      },
+    });
+  }
+
+  changeStatus() {
+    if (!this.ticket || this.selectedStatus === this.statusDisplayMap[this.ticket.status]) return;
+
+    this.loading = true;
+    const backendStatus = this.statusApiMap[this.selectedStatus];
+    this.ticketService.updateTicketStatus(this.ticket.id, backendStatus).subscribe({
+      next: () => {
+        this.ticket.status = backendStatus;
+        this.loading = false;
+        alert('Durum başarıyla güncellendi.');
+      },
+      error: (err) => {
+        this.loading = false;
+        alert('Durum güncellenirken hata oluştu: ' + (err.message || err));
       },
     });
   }

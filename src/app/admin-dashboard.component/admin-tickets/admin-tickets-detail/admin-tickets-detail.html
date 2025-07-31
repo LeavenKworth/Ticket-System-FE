@@ -6,24 +6,48 @@
   <div *ngIf="ticket" class="mb-6">
     <h2 class="text-xl font-semibold mb-2">Başlık: {{ ticket.title }}</h2>
     <p><strong>Açıklama:</strong> {{ ticket.description }}</p>
-    <p><strong>Durum:</strong> {{ ticket.status }}</p>
+    <p><strong>Durum:</strong> {{ statusDisplayMap[ticket.status] || ticket.status }}</p>
     <p><strong>Oluşturulma:</strong> {{ ticket.createdAt | date:'short' }}</p>
   </div>
 
   <hr class="my-4" />
 
+  <!-- Durum değiştirme alanı -->
+  <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+    <h3 class="text-xl font-semibold mb-3 text-indigo-700">Durumu Değiştir</h3>
+    <select [(ngModel)]="selectedStatus" class="border rounded p-2 w-48 mb-3">
+      <option value="Açık">Açık</option>
+      <option value="İşleniyor">İşleniyor</option>
+      <option value="Kapalı">Kapalı</option>
+    </select>
+    <button
+      (click)="changeStatus()"
+      [disabled]="loading || selectedStatus === (statusDisplayMap[ticket.status] || ticket.status)"
+      class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+    >
+      Durumu Güncelle
+    </button>
+  </div>
+
+  <hr class="my-4" />
+
   <h3 class="text-2xl font-bold mb-4 text-indigo-600">Yorumlar</h3>
-  <div *ngFor="let comment of comments" class="mb-3 p-4 bg-gray-100 rounded-lg">
-    <div class="text-sm text-gray-600 mb-1">
-      {{ getUserName(comment.userId) }} |
-      {{ comment.createdAt | date:'short' }}
-      <span
-        *ngIf="comment.isInternal"
-        class="ml-2 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
-      >İÇSEL</span
-      >
+  <!-- Scrollable yorumlar container -->
+  <div
+    class="mb-3 p-4 bg-gray-100 rounded-lg overflow-y-auto"
+    style="max-height: 300px;"
+  >
+    <div *ngFor="let comment of comments" class="mb-3">
+      <div class="text-sm text-gray-600 mb-1">
+        {{ getUserName(comment.userId) }} |
+        {{ comment.createdAt | date:'short' }}
+        <span
+          *ngIf="comment.isInternal"
+          class="ml-2 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
+        >İÇSEL</span>
+      </div>
+      <div>{{ comment.comment }}</div>
     </div>
-    <div>{{ comment.comment }}</div>
   </div>
 
   <hr class="my-4" />
