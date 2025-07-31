@@ -1,0 +1,8 @@
+#comments-container {
+  max-height: 300px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}

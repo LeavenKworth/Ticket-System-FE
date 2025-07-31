@@ -1,0 +1,96 @@
+<div class="max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-lg min-h-screen flex flex-col">
+  <h1 class="text-4xl font-bold text-indigo-700 mb-8 text-center">Ticket Detayı (Support)</h1>
+
+  <div *ngIf="error" class="text-red-500 text-center mb-4">{{ error }}</div>
+
+  <div *ngIf="ticket" class="mb-6">
+    <h2 class="text-xl font-semibold mb-2">Başlık: {{ ticket.title }}</h2>
+    <p><strong>Açıklama:</strong> {{ ticket.description }}</p>
+    <p><strong>Durum:</strong> {{ statusDisplayMap[ticket.status] || ticket.status }}</p>
+    <p><strong>Oluşturulma:</strong> {{ ticket.createdAt | date:'short' }}</p>
+  </div>
+
+  <hr class="my-4" />
+
+  <!-- Durum değiştirme alanı -->
+  <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+    <h3 class="text-xl font-semibold mb-3 text-indigo-700">Durumu Değiştir</h3>
+    <select [(ngModel)]="selectedStatus" class="border rounded p-2 w-48 mb-3">
+      <option value="Açık">Açık</option>
+      <option value="İşleniyor">İşleniyor</option>
+      <option value="Kapalı">Kapalı</option>
+    </select>
+    <button
+      (click)="changeStatus()"
+      [disabled]="loading || selectedStatus === (statusDisplayMap[ticket.status] || ticket.status)"
+      class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+    >
+      Durumu Güncelle
+    </button>
+  </div>
+
+  <hr class="my-4" />
+
+  <!-- Yorumlar -->
+  <h3 class="text-2xl font-bold mb-4 text-indigo-600">Yorumlar</h3>
+
+  <div
+    id="comments-container"
+    class="mb-3 p-4 bg-gray-100 rounded-lg overflow-y-auto flex flex-col gap-4"
+    style="max-height: 300px; scroll-behavior: smooth;"
+  >
+    <div
+      *ngFor="let comment of comments"
+      class="max-w-xl px-5 py-3 rounded-2xl shadow-md bg-gray-200 text-gray-800"
+      [class.bg-indigo-600]="comment.userId === currentUserId"
+      [class.text-white]="comment.userId === currentUserId"
+      [class.rounded-br-none]="comment.userId === currentUserId"
+      [class.rounded-bl-none]="comment.userId !== currentUserId"
+      [style.alignSelf]="comment.userId === currentUserId ? 'flex-end' : 'flex-start'"
+    >
+      <p class="text-xs font-semibold mb-1 select-text">{{ getUserName(comment.userId) }}</p>
+      <p class="text-sm whitespace-pre-wrap">{{ comment.comment }}</p>
+      <time
+        class="block text-xs mt-1"
+        [class.text-gray-300]="comment.userId === currentUserId"
+        [class.text-gray-600]="comment.userId !== currentUserId"
+      >
+        {{ comment.createdAt | date: 'short' }}
+      </time>
+      <span
+        *ngIf="comment.isInternal"
+        class="inline-block mt-1 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
+      >
+        İÇSEL
+      </span>
+    </div>
+
+    <div *ngIf="comments.length === 0" class="text-gray-500 italic">
+      Henüz yorum yok.
+    </div>
+  </div>
+
+  <hr class="my-4" />
+
+  <!-- Yeni yorum ekleme -->
+  <h3 class="text-xl font-semibold mb-2 text-indigo-700">Yeni Yorum Ekle</h3>
+  <textarea
+    [(ngModel)]="newComment"
+    rows="3"
+    placeholder="Yorum yaz..."
+    class="w-full p-3 border rounded mb-2"
+  ></textarea>
+
+  <label class="flex items-center space-x-2 mb-4">
+    <input type="checkbox" [(ngModel)]="isInternal" />
+    <span>Yorum sadece admin ve support tarafından görülsün (İçsel)</span>
+  </label>
+
+  <button
+    (click)="sendComment()"
+    class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+    [disabled]="loading"
+  >
+    Gönder
+  </button>
+</div>
