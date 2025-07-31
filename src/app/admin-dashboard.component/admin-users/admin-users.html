@@ -1,0 +1,28 @@
+<div class="p-8">
+  <h1 class="text-3xl font-bold mb-6 text-indigo-600">Kullanıcı Listesi</h1>
+
+  <div *ngIf="loading" class="text-gray-400">Yükleniyor...</div>
+
+  <table *ngIf="!loading" class="min-w-full border rounded-lg shadow">
+    <thead class="bg-gray-100">
+    <tr>
+      <th class="p-3 text-left">ID</th>
+      <th class="p-3 text-left">İsim</th>
+      <th class="p-3 text-left">Email</th>
+      <th class="p-3 text-left">Rol</th>
+      <th class="p-3 text-left">İşlem</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let user of users" class="border-b hover:bg-gray-50">
+      <td class="p-3">{{ user.id }}</td>
+      <td class="p-3">{{ user.name }}</td>
+      <td class="p-3">{{ user.email }}</td>
+      <td class="p-3">{{ user.role }}</td>
+      <td class="p-3">
+        <button (click)="goToDetails(user.id)" class="text-blue-600 hover:underline">Detay</button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

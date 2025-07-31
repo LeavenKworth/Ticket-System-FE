@@ -1,0 +1,46 @@
+<div class="ticket-container">
+  <h2>Yeni Ticket Oluştur</h2>
+
+  <form (ngSubmit)="createTicket()" #ticketForm="ngForm">
+    <div class="form-group">
+      <label for="title">Başlık</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        [(ngModel)]="newTicket.title"
+        required
+        class="form-control"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="description">Açıklama</label>
+      <textarea
+        id="description"
+        name="description"
+        [(ngModel)]="newTicket.description"
+        rows="4"
+        required
+        class="form-control"
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="productId">Ürün ID (Opsiyonel)</label>
+      <input
+        type="text"
+        id="productId"
+        name="productId"
+        [(ngModel)]="newTicket.productId"
+        class="form-control"
+      />
+    </div>
+
+    <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <button type="submit" class="btn-submit">
+      Ticket Oluştur
+    </button>
+  </form>
+</div>

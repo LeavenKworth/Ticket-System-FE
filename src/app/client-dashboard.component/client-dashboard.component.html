@@ -1,0 +1,86 @@
+<div class="max-w-5xl mx-auto p-8 bg-gradient-to-r from-indigo-100 via-white to-indigo-100 min-h-screen rounded-3xl shadow-2xl">
+  <h1 class="text-5xl font-extrabold mb-12 text-center text-indigo-700 drop-shadow-md">
+    {{ userName }}
+  </h1>
+
+  <div class="flex justify-center mb-8">
+    <label for="statusFilter" class="mr-4 font-semibold text-indigo-700">Duruma göre filtrele:</label>
+    <select
+      id="statusFilter"
+      [(ngModel)]="statusFilter"
+      (change)="applyFilter()"
+      class="px-4 py-2 rounded border border-indigo-300"
+    >
+      <option value="Hepsi">Hepsi</option>
+      <option value="Open">Açık</option>
+      <option value="InProgress">Devam Ediyor</option>
+      <option value="Closed">Kapalı</option>
+    </select>
+  </div>
+
+  <div class="flex justify-center mb-12">
+    <a routerLink="/client/create-ticket" class="inline-block">
+      <button
+        class="flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+               text-white font-semibold px-12 py-4 rounded-full shadow-lg transition duration-300"
+        aria-label="Yeni Ticket Oluştur"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span class="text-xl">Yeni Ticket Oluştur</span>
+      </button>
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="text-center text-gray-400 text-xl italic animate-pulse select-none">
+    Yükleniyor...
+  </div>
+
+  <div *ngIf="errorMessage" class="text-center text-red-600 text-lg font-semibold mb-6">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!loading && filteredTickets.length === 0" class="text-center text-gray-500 text-lg italic">
+    Henüz ticket yok.
+  </div>
+
+  <div *ngIf="filteredTickets.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+    <a
+      *ngFor="let ticket of filteredTickets"
+      [routerLink]="['/client/ticket-detail', ticket.id]"
+      tabindex="0"
+      role="article"
+      [attr.aria-label]="'Ticket ' + ticket.title"
+      class="bg-white rounded-3xl shadow-2xl p-8 flex flex-col justify-between hover:scale-105 transform transition-transform duration-300 cursor-pointer group no-underline"
+    >
+      <h3 class="text-3xl font-bold text-indigo-900 mb-5 truncate" [attr.title]="ticket.title">
+        {{ ticket.title }}
+      </h3>
+
+      <p class="text-gray-700 mb-8 line-clamp-4">
+        {{ ticket.description }}
+      </p>
+
+      <div class="flex justify-between items-center text-sm text-gray-600">
+        <span
+          class="inline-block px-4 py-2 rounded-full text-white font-semibold tracking-wide uppercase text-xs
+                 transition-colors duration-300
+                 group-hover:bg-indigo-600"
+          [ngClass]="{
+            'bg-green-500': ticket.status === 'Open',
+            'bg-yellow-400': ticket.status === 'InProgress',
+            'bg-red-500': ticket.status === 'Closed',
+            'bg-gray-400': ticket.status !== 'Open' && ticket.status !== 'InProgress' && ticket.status !== 'Closed'
+          }"
+        >
+          {{ ticket.status }}
+        </span>
+
+        <time [attr.datetime]="ticket.createdAt" class="text-gray-400">
+          {{ ticket.createdAt | date: 'mediumDate' }}
+        </time>
+      </div>
+    </a>
+  </div>
+</div>

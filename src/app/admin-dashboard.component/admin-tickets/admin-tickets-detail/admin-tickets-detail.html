@@ -1,0 +1,51 @@
+<div class="max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-lg min-h-screen flex flex-col">
+  <h1 class="text-4xl font-bold text-indigo-700 mb-8 text-center">Ticket Detayı</h1>
+
+  <div *ngIf="error" class="text-red-500 text-center mb-4">{{ error }}</div>
+
+  <div *ngIf="ticket" class="mb-6">
+    <h2 class="text-xl font-semibold mb-2">Başlık: {{ ticket.title }}</h2>
+    <p><strong>Açıklama:</strong> {{ ticket.description }}</p>
+    <p><strong>Durum:</strong> {{ ticket.status }}</p>
+    <p><strong>Oluşturulma:</strong> {{ ticket.createdAt | date:'short' }}</p>
+  </div>
+
+  <hr class="my-4" />
+
+  <h3 class="text-2xl font-bold mb-4 text-indigo-600">Yorumlar</h3>
+  <div *ngFor="let comment of comments" class="mb-3 p-4 bg-gray-100 rounded-lg">
+    <div class="text-sm text-gray-600 mb-1">
+      {{ getUserName(comment.userId) }} |
+      {{ comment.createdAt | date:'short' }}
+      <span
+        *ngIf="comment.isInternal"
+        class="ml-2 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
+      >İÇSEL</span
+      >
+    </div>
+    <div>{{ comment.comment }}</div>
+  </div>
+
+  <hr class="my-4" />
+
+  <h3 class="text-xl font-semibold mb-2 text-indigo-700">Yeni Yorum Ekle</h3>
+  <textarea
+    [(ngModel)]="newComment"
+    rows="3"
+    placeholder="Yorum yaz..."
+    class="w-full p-3 border rounded mb-2"
+  ></textarea>
+
+  <label class="flex items-center space-x-2 mb-4">
+    <input type="checkbox" [(ngModel)]="isInternal" />
+    <span>Yorum sadece admin ve support tarafından görülsün (İçsel)</span>
+  </label>
+
+  <button
+    (click)="sendComment()"
+    class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+    [disabled]="loading"
+  >
+    Gönder
+  </button>
+</div>
