@@ -1,0 +1,65 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+    <h2 class="text-2xl font-bold text-center text-indigo-600 mb-6">Kayıt Ol</h2>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700">Ad Soyad</label>
+        <input
+          id="name"
+          type="text"
+          formControlName="Name"
+          class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          [class.border-red-500]="registerForm.get('Name')?.invalid && registerForm.get('Name')?.touched"
+        />
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          [class.border-red-500]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Şifre</label>
+        <div class="relative">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            [class.border-red-500]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          />
+          <button type="button" (click)="togglePasswordVisibility()" class="absolute right-3 top-3 text-sm text-gray-500">
+            {{ showPassword ? 'Gizle' : 'Göster' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="text-red-500 text-sm mt-2">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="text-green-600 text-sm mt-2">
+        {{ successMessage }}
+      </div>
+
+      <button
+        type="submit"
+        class="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+        [disabled]="registerForm.invalid"
+      >
+        Kayıt Ol
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-gray-600">
+      Zaten hesabınız var mı?
+      <a (click)="goToLoginPage()" class="text-indigo-600 hover:underline cursor-pointer">Giriş yap</a>
+    </p>
+  </div>
+</div>
