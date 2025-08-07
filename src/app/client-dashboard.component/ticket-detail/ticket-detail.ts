@@ -6,14 +6,17 @@ import { User } from '../../models/user.model';
 import { TicketService } from '../../services/ticket';
 import { TicketCommentsService } from '../../services/ticket-comment';
 import { UserService } from '../../services/user';
-import { CommonModule } from '@angular/common';
+import { ImageService } from '../../services/image';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { HttpEventType } from '@angular/common/http';
 
 @Component({
   selector: 'app-ticket-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgOptimizedImage],
   templateUrl: './ticket-detail.html',
   styleUrls: ['./ticket-detail.css']
 })
@@ -29,13 +32,21 @@ export class TicketDetailComponent implements OnInit {
   userNames = new Map<number, string>();
 
   currentUserId: number = 0;
-  currentUserRole : string = '';
+  currentUserRole: string = '';
+
+  selectedFile: File | null = null;
+  uploadProgress: number | null = null;
+  imagePreviewUrl: string | null = null;
+
+  enlargedImageUrl: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private ticketService: TicketService,
     private commentService: TicketCommentsService,
-    private userService: UserService
+    private userService: UserService,
+    private imageService: ImageService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -70,15 +81,13 @@ export class TicketDetailComponent implements OnInit {
 
   fetchComments(): void {
     const role = localStorage.getItem('role') || '';
-
     this.commentService.getCommentsByTicketId(this.ticketId).subscribe({
       next: async (comments) => {
         this.comments = role === 'client'
           ? comments.filter(c => !c.isInternal)
           : comments;
+
         this.comments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-
         await this.loadUserNamesForComments(this.comments);
       },
       error: () => {
@@ -90,8 +99,7 @@ export class TicketDetailComponent implements OnInit {
   async loadUserNamesForComments(comments: TicketComment[]) {
     const uniqueUserIds = Array.from(
       new Set(
-        comments
-          .map(c => c.userId)
+        comments.map(c => c.userId)
           .filter((id): id is number => typeof id === 'number' && id !== null && id !== undefined)
       )
     );
@@ -100,19 +108,17 @@ export class TicketDetailComponent implements OnInit {
 
     try {
       const userPromises = userIdsToFetch.map(id =>
-        firstValueFrom(this.userService.getUserById(id))
-          .catch(() => null)
+        firstValueFrom(this.userService.getUserById(id)).catch(() => null)
       );
 
       const users = await Promise.all(userPromises);
-
       users.forEach(user => {
         if (user) {
           this.userNames.set(user.id, user.name);
         }
       });
     } catch {
-      // hata yutulabilir, kullanıcı isimleri eksik kalabilir
+      // hata yutulabilir
     }
   }
 
@@ -120,13 +126,57 @@ export class TicketDetailComponent implements OnInit {
     return this.userNames.get(userId) || 'Anonim';
   }
 
+  sanitizeImageUrl(url: string): string {
+    return url.replace('https://', 'http://'); // SafeUrl kullanmadık çünkü ngSrc string bekler
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+
+      // Ön izleme oluştur
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl = reader.result as string;
+      };
+      reader.readAsDataURL(this.selectedFile);
+    }
+  }
+
   addComment(): void {
     if (!this.newCommentText.trim()) return;
 
     this.addingComment = true;
-    this.commentService.addComment(this.ticketId, this.newCommentText).subscribe({
+    this.uploadProgress = null;
+
+    if (this.selectedFile) {
+      this.imageService.uploadImage(this.selectedFile).subscribe({
+        next: event => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+          } else if (event.type === HttpEventType.Response) {
+            const imageUrl = event.body?.url;
+            this.submitComment(imageUrl);
+          }
+        },
+        error: () => {
+          this.errorMessage = 'Resim yüklenirken hata oluştu.';
+          this.addingComment = false;
+        }
+      });
+    } else {
+      this.submitComment(null);
+    }
+  }
+
+  private submitComment(imageUrl: string | null) {
+    this.commentService.addComment(this.ticketId, this.newCommentText, imageUrl ?? undefined ).subscribe({
       next: () => {
         this.newCommentText = '';
+        this.selectedFile = null;
+        this.uploadProgress = null;
+        this.imagePreviewUrl = null;
         this.addingComment = false;
         this.fetchComments();
       },
@@ -135,5 +185,13 @@ export class TicketDetailComponent implements OnInit {
         this.addingComment = false;
       }
     });
+  }
+
+  openImageModal(url: string): void {
+    this.enlargedImageUrl = url;
+  }
+
+  closeImageModal(): void {
+    this.enlargedImageUrl = null;
   }
 }

@@ -1,5 +1,5 @@
 <div class="max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-lg min-h-screen flex flex-col">
-  <h1 class="text-4xl font-bold text-indigo-700 mb-8 text-center">Ticket Detayı</h1>
+  <h1 class="text-4xl font-bold text-indigo-700 mb-8 text-center">Ticket Detayı (Support)</h1>
 
   <div *ngIf="error" class="text-red-500 text-center mb-4">{{ error }}</div>
 
@@ -12,7 +12,7 @@
 
   <hr class="my-4" />
 
-  <!-- Durum değiştirme alanı -->
+  <!-- Durum değiştirme -->
   <div class="mb-6 p-4 bg-gray-100 rounded-lg">
     <h3 class="text-xl font-semibold mb-3 text-indigo-700">Durumu Değiştir</h3>
     <select [(ngModel)]="selectedStatus" class="border rounded p-2 w-48 mb-3">
@@ -31,27 +31,52 @@
 
   <hr class="my-4" />
 
+  <!-- Yorumlar -->
   <h3 class="text-2xl font-bold mb-4 text-indigo-600">Yorumlar</h3>
-  <!-- Scrollable yorumlar container -->
-  <div
-    class="mb-3 p-4 bg-gray-100 rounded-lg overflow-y-auto"
-    style="max-height: 300px;"
-  >
-    <div *ngFor="let comment of comments" class="mb-3">
-      <div class="text-sm text-gray-600 mb-1">
-        {{ getUserName(comment.userId) }} |
-        {{ comment.createdAt | date:'short' }}
-        <span
-          *ngIf="comment.isInternal"
-          class="ml-2 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
-        >İÇSEL</span>
+
+  <div class="mb-3 p-4 bg-gray-100 rounded-lg overflow-y-auto flex flex-col gap-3" style="max-height: 300px;">
+    <div *ngIf="comments.length === 0" class="text-gray-500 italic">Henüz yorum yok.</div>
+
+    <div
+      *ngFor="let comment of comments"
+      class="max-w-xl px-5 py-3 rounded-2xl shadow-md"
+      [ngClass]="{
+        'self-end bg-indigo-600 text-white rounded-br-none': comment.userId === currentUserId,
+        'self-start bg-gray-200 text-gray-800 rounded-bl-none': comment.userId !== currentUserId
+      }"
+    >
+      <p class="text-xs font-semibold mb-1 select-text">{{ getUserName(comment.userId) }}</p>
+      <p class="text-sm whitespace-pre-wrap">{{ comment.comment }}</p>
+
+      <time
+        class="block text-xs mt-1"
+        [class.text-gray-300]="comment.userId === currentUserId"
+        [class.text-gray-600]="comment.userId !== currentUserId"
+      >
+        {{ comment.createdAt | date: 'short' }}
+      </time>
+
+      <span
+        *ngIf="comment.isInternal"
+        class="inline-block mt-1 text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded"
+      >
+        İÇSEL
+      </span>
+
+      <div *ngIf="comment.imageUrl" class="mt-2">
+        <img
+          [src]="sanitizeImageUrl(comment.imageUrl)"
+          alt="Yorum resmi"
+          class="max-w-xs rounded-lg shadow-sm cursor-pointer transition duration-200 hover:scale-105"
+          (click)="openImageModal(comment.imageUrl)"
+        />
       </div>
-      <div>{{ comment.comment }}</div>
     </div>
   </div>
 
   <hr class="my-4" />
 
+  <!-- Yeni yorum ekleme -->
   <h3 class="text-xl font-semibold mb-2 text-indigo-700">Yeni Yorum Ekle</h3>
   <textarea
     [(ngModel)]="newComment"
@@ -65,11 +90,59 @@
     <span>Yorum sadece admin ve support tarafından görülsün (İçsel)</span>
   </label>
 
+  <!-- Resim yükleme alanı -->
+  <div class="mb-4">
+    <label
+      for="commentImage"
+      class="inline-block cursor-pointer bg-indigo-100 text-indigo-700 border border-indigo-300 px-4 py-2 rounded hover:bg-indigo-200 transition duration-200"
+    >
+      📎 Resim Yükle (Opsiyonel)
+    </label>
+    <input
+      type="file"
+      id="commentImage"
+      (change)="onFileSelected($event)"
+      accept="image/*"
+      class="hidden"
+    />
+  </div>
+
+  <!-- Önizleme -->
+  <div *ngIf="imagePreviewUrl" class="mb-4">
+    <p class="text-sm text-gray-500 mb-1">Seçilen Resim:</p>
+    <img
+      [src]="imagePreviewUrl"
+      alt="Önizleme"
+      class="max-w-sm rounded shadow border border-gray-300"
+    />
+  </div>
+
+  <!-- Yükleme çubuğu -->
+  <div *ngIf="uploadProgress !== null" class="w-full bg-gray-200 rounded h-2 mb-4">
+    <div
+      class="bg-indigo-600 h-2 rounded"
+      [style.width.%]="uploadProgress"
+    ></div>
+  </div>
+
   <button
     (click)="sendComment()"
     class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
     [disabled]="loading"
   >
-    Gönder
+    {{ loading ? 'Gönderiliyor...' : 'Gönder' }}
   </button>
+
+  <!-- Resim modal -->
+  <div
+    *ngIf="enlargedImageUrl"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+    (click)="closeImageModal()"
+  >
+    <img
+      [src]="sanitizeImageUrl(enlargedImageUrl)"
+      alt="Büyük resim"
+      class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl border border-white"
+    />
+  </div>
 </div>

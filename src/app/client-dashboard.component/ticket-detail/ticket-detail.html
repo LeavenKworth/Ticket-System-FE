@@ -3,103 +3,182 @@
     Ticket Detayı
   </h1>
 
-  <div *ngIf="loading" class="text-center text-gray-400 italic animate-pulse">
-    Yükleniyor...
-  </div>
+  @if (loading) {
+    <div class="text-center text-gray-400 italic animate-pulse">
+      Yükleniyor...
+    </div>
+  }
 
-  <div *ngIf="errorMessage" class="text-center text-red-600 font-semibold mb-6">
-    {{ errorMessage }}
-  </div>
+  @if (errorMessage) {
+    <div class="text-center text-red-600 font-semibold mb-6">
+      {{ errorMessage }}
+    </div>
+  }
 
-  <div *ngIf="!loading && ticket" class="flex-1 flex flex-col space-y-6">
-    <!-- Ticket Info -->
-    <section>
-      <h2 class="text-2xl font-semibold text-indigo-900 mb-2">{{ ticket.title }}</h2>
-      <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</p>
+  @if (!loading && ticket) {
+    <div class="flex-1 flex flex-col space-y-6">
+      <!-- Ticket Info -->
+      <section>
+        <h2 class="text-2xl font-semibold text-indigo-900 mb-2">{{ ticket.title }}</h2>
+        <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</p>
 
-      <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
-        <span
-          class="inline-block px-3 py-1 rounded-full text-white font-semibold uppercase"
-          [ngClass]="{
-            'bg-green-500': ticket.status === 'Open',
-            'bg-yellow-400': ticket.status === 'InProgress',
-            'bg-red-500': ticket.status === 'Closed',
-            'bg-gray-400': ticket.status !== 'Open' && ticket.status !== 'InProgress' && ticket.status !== 'Closed'
-          }"
-        >
-          {{ ticket.status }}
-        </span>
-        <time [attr.datetime]="ticket.createdAt">{{ ticket.createdAt | date: 'medium' }}</time>
-      </div>
-    </section>
-
-    <!-- Yorumlar -->
-    <section class="flex-1 flex flex-col">
-      <h3 class="text-xl font-semibold mb-4 text-indigo-700">Yorumlar</h3>
-
-      <div *ngIf="comments.length === 0" class="text-gray-500 italic">
-        Henüz yorum yok.
-      </div>
-
-      <ul
-        #commentsContainer
-        id="comments-container"
-        class="flex-1 overflow-y-auto flex flex-col gap-4"
-        style="scroll-behavior: smooth; max-height: 400px;"
-      >
-        <li
-          *ngFor="let comment of comments"
-          class="flex"
-          [class.justify-end]="comment.userId == currentUserId"
-          [class.justify-start]="comment.userId != currentUserId"
-        >
-          <div
-            class="max-w-xs px-5 py-3 rounded-2xl shadow-md inline-block"
-            [class.bg-indigo-600]="comment.userId == currentUserId"
-            [class.text-white]="comment.userId == currentUserId"
-            [class.rounded-br-none]="comment.userId == currentUserId"
-            [class.bg-gray-200]="comment.userId != currentUserId"
-            [class.text-gray-800]="comment.userId != currentUserId"
-            [class.rounded-bl-none]="comment.userId != currentUserId"
+        <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <span
+            class="inline-block px-3 py-1 rounded-full text-white font-semibold uppercase"
+            [class.bg-green-500]="ticket.status === 'Open'"
+            [class.bg-yellow-400]="ticket.status === 'InProgress'"
+            [class.bg-red-500]="ticket.status === 'Closed'"
+            [class.bg-gray-400]="
+              ticket.status !== 'Open' &&
+              ticket.status !== 'InProgress' &&
+              ticket.status !== 'Closed'
+            "
           >
-            <p class="text-xs font-semibold mb-1 select-text">
-              {{ getUserName(comment.userId) }}
-            </p>
-            <p class="text-sm whitespace-pre-wrap">{{ comment.comment }}</p>
-            <time
-              class="block text-xs mt-1"
-              [class.text-gray-300]="comment.userId == currentUserId"
-              [class.text-gray-600]="comment.userId != currentUserId"
-            >
-              {{ comment.createdAt | date: 'short' }}
-            </time>
+            {{ ticket.status }}
+          </span>
+          <time [attr.datetime]="ticket.createdAt">
+            {{ ticket.createdAt | date: 'medium' }}
+          </time>
+        </div>
+      </section>
+
+      <!-- Yorumlar -->
+      <section class="flex-1 flex flex-col mt-8">
+        <h3 class="text-xl font-semibold mb-4 text-indigo-700">Yorumlar</h3>
+
+        @if (comments.length === 0) {
+          <div class="text-gray-500 italic">
+            Henüz yorum yok.
           </div>
-        </li>
-      </ul>
-    </section>
+        }
 
-    <!-- Yorum Ekle -->
-    <section class="mt-8">
-      <h3 class="text-xl font-semibold mb-4 text-indigo-700">Yorum Ekle</h3>
+        @if (comments.length > 0) {
+          <ul
+            id="comments-container"
+            class="flex-1 overflow-y-auto flex flex-col gap-4"
+            style="scroll-behavior: smooth; max-height: 400px;"
+          >
+            @for (comment of comments; track comment.id) {
+              <li
+                class="flex"
+                [class.justify-end]="comment.userId === currentUserId"
+                [class.justify-start]="comment.userId !== currentUserId"
+              >
+                <div
+                  class="max-w-xs px-5 py-3 rounded-2xl shadow-md inline-block"
+                  [class.bg-indigo-600]="comment.userId === currentUserId"
+                  [class.text-white]="comment.userId === currentUserId"
+                  [class.rounded-br-none]="comment.userId === currentUserId"
+                  [class.bg-gray-200]="comment.userId !== currentUserId"
+                  [class.text-gray-800]="comment.userId !== currentUserId"
+                  [class.rounded-bl-none]="comment.userId !== currentUserId"
+                >
+                  <p class="text-xs font-semibold mb-1 select-text">
+                    {{ getUserName(comment.userId) }}
+                  </p>
 
-      <form (submit)="addComment()" class="flex flex-col gap-4" novalidate>
-        <textarea
-          [(ngModel)]="newCommentText"
-          name="newComment"
-          placeholder="Yorumunuzu yazın..."
-          class="w-full p-4 rounded border border-gray-300 focus:outline-indigo-500 resize-none"
-          rows="4"
-          required
-        ></textarea>
+                  <p class="text-sm whitespace-pre-wrap">{{ comment.comment }}</p>
 
-        <button
-          type="submit"
-          [disabled]="addingComment"
-          class="self-end bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {{ addingComment ? 'Gönderiliyor...' : 'Yorumu Ekle' }}
-        </button>
-      </form>
-    </section>
-  </div>
+                  @if (comment.imageUrl) {
+                    <div class="mt-2">
+                      <img
+                        [ngSrc]="sanitizeImageUrl(comment.imageUrl)"
+                        width="400"
+                        height="300"
+                        alt="Yorum resmi"
+                        class="max-w-full rounded-lg shadow-sm cursor-pointer transition duration-200 hover:scale-105"
+                        (click)="openImageModal(comment.imageUrl)"
+                      />
+                    </div>
+                  }
+
+                  <time
+                    class="block text-xs mt-1"
+                    [class.text-gray-300]="comment.userId === currentUserId"
+                    [class.text-gray-600]="comment.userId !== currentUserId"
+                  >
+                    {{ comment.createdAt | date: 'short' }}
+                  </time>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Yorum Ekle -->
+      <section class="mt-8">
+        <h3 class="text-xl font-semibold mb-4 text-indigo-700">Yorum Ekle</h3>
+
+        <form (submit)="addComment()" class="flex flex-col gap-4" novalidate>
+          <textarea
+            [(ngModel)]="newCommentText"
+            name="newComment"
+            placeholder="Yorumunuzu yazın..."
+            class="w-full p-4 rounded border border-gray-300 focus:outline-indigo-500 resize-none"
+            rows="4"
+            required
+          ></textarea>
+
+          <!-- Görsel seçme butonu -->
+          <div>
+            <label
+              for="commentImage"
+              class="inline-block cursor-pointer bg-indigo-100 text-indigo-700 border border-indigo-300 px-4 py-2 rounded hover:bg-indigo-200 transition duration-200"
+            >
+              📎 Resim Yükle (Opsiyonel)
+            </label>
+            <input
+              type="file"
+              id="commentImage"
+              (change)="onFileSelected($event)"
+              accept="image/*"
+              class="hidden"
+            />
+          </div>
+
+          <!-- Önizleme -->
+          @if (imagePreviewUrl) {
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 mb-1">Seçilen Resim:</p>
+              <img
+                [src]="imagePreviewUrl"
+                alt="Önizleme"
+                class="max-w-sm rounded shadow border border-gray-300"
+              />
+            </div>
+          }
+
+          <!-- Yükleme çubuğu -->
+          @if (uploadProgress !== null) {
+            <div class="w-full bg-gray-200 rounded h-2 mt-2">
+              <div class="bg-indigo-600 h-2 rounded" [style.width.%]="uploadProgress"></div>
+            </div>
+          }
+
+          <button
+            type="submit"
+            [disabled]="addingComment"
+            class="self-end bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ addingComment ? 'Gönderiliyor...' : 'Yorumu Ekle' }}
+          </button>
+        </form>
+      </section>
+    </div>
+  }
+
+  <!-- Resim modal -->
+  @if (enlargedImageUrl) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+      (click)="closeImageModal()"
+    >
+      <img
+        [src]="sanitizeImageUrl(enlargedImageUrl)"
+        alt="Büyük resim"
+        class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl border border-white"
+      />
+    </div>
+  }
 </div>

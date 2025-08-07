@@ -25,7 +25,7 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(email: string, password: string): Observable<void> {
-    return this.http.post<LoginResponse>('https://localhost:7108/api/v1/Auth/login', { email, password }).pipe(
+    return this.http.post<LoginResponse>('http://localhost:7108/api/v1/Auth/login', { email, password }).pipe(
       switchMap(response => {
         localStorage.setItem(this.tokenKey, response.token);
 
@@ -52,7 +52,7 @@ export class AuthService {
       Authorization: `Bearer ${token}`,
     });
 
-    return this.http.get<UserResponse>(`https://localhost:7108/api/v1/users/${userId}`, { headers });
+    return this.http.get<UserResponse>(`http://localhost:7108/api/v1/users/${userId}`, { headers });
   }
 
   getUserRole(): string | null {

@@ -5,9 +5,11 @@ import { TicketCommentsService } from '../../../services/ticket-comment';
 import { Ticket } from '../../../models/ticket.model';
 import { TicketComment } from '../../../models/ticket-comment.model';
 import { UserService } from '../../../services/user';
+import { ImageService } from '../../../services/image';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { HttpEventType } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin-tickets-detail',
@@ -23,6 +25,7 @@ export class AdminTicketsDetail implements OnInit {
   newComment: string = '';
   isInternal: boolean = false;
 
+  currentUserId: number = 0;
   loading: boolean = false;
   error: string = '';
 
@@ -42,15 +45,24 @@ export class AdminTicketsDetail implements OnInit {
     Kapalı: 'Closed',
   };
 
+
+  selectedFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  enlargedImageUrl: string | null = null;
+  uploadProgress: number | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private ticketService: TicketService,
     private commentService: TicketCommentsService,
-    private userService: UserService
+    private userService: UserService,
+    private imageService: ImageService // ImageService eklendi
   ) {}
 
   ngOnInit(): void {
     this.ticketId = Number(this.route.snapshot.paramMap.get('id'));
+    const storedUserId = localStorage.getItem('userId');
+    this.currentUserId = storedUserId ? Number(storedUserId) : 0;
     if (this.ticketId) {
       this.loadTicket();
       this.loadComments();
@@ -64,7 +76,6 @@ export class AdminTicketsDetail implements OnInit {
       next: (ticket) => {
         this.ticket = ticket;
         this.error = '';
-        // backend durumdan frontend seçime dönüştür
         this.selectedStatus = this.statusDisplayMap[ticket.status] || ticket.status;
       },
       error: () => (this.error = 'Ticket bilgisi yüklenemedi.'),
@@ -103,25 +114,67 @@ export class AdminTicketsDetail implements OnInit {
     return this.userNames.get(userId) ?? 'Anonim';
   }
 
+  // Dosya seçildiğinde önizleme oluşturur
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl = reader.result as string;
+      };
+      reader.readAsDataURL(this.selectedFile);
+    }
+  }
+
   sendComment(): void {
     if (!this.newComment.trim()) return;
 
     this.loading = true;
+    this.uploadProgress = null;
+
+    if (this.selectedFile) {
+      // Resim varsa önce upload et
+      this.imageService.uploadImage(this.selectedFile).subscribe({
+        next: event => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+          } else if (event.type === HttpEventType.Response) {
+            const imageUrl = event.body?.url;
+            this.submitComment(imageUrl);
+          }
+        },
+        error: () => {
+          this.error = 'Resim yüklenirken hata oluştu.';
+          this.loading = false;
+        }
+      });
+    } else {
+      // Resimsiz yorum gönder
+      this.submitComment(null);
+    }
+  }
+
+  private submitComment(imageUrl: string | null) {
     const serviceCall = this.isInternal
-      ? this.commentService.addCommentInternal(this.ticketId, this.newComment)
-      : this.commentService.addComment(this.ticketId, this.newComment);
+      ? this.commentService.addCommentInternal(this.ticketId, this.newComment, imageUrl ?? undefined)
+      : this.commentService.addComment(this.ticketId, this.newComment, imageUrl ?? undefined);
 
     serviceCall.subscribe({
       next: (comment) => {
         this.comments.push(comment);
         this.newComment = '';
         this.isInternal = false;
+        this.selectedFile = null;
+        this.imagePreviewUrl = null;
+        this.uploadProgress = null;
         this.loading = false;
       },
       error: () => {
         this.error = 'Yorum gönderilemedi.';
         this.loading = false;
-      },
+      }
     });
   }
 
@@ -141,5 +194,16 @@ export class AdminTicketsDetail implements OnInit {
         alert('Durum güncellenirken hata oluştu: ' + (err.message || err));
       },
     });
+  }
+
+  openImageModal(url: string): void {
+    this.enlargedImageUrl = url;
+  }
+
+  closeImageModal(): void {
+    this.enlargedImageUrl = null;
+  }
+  sanitizeImageUrl(url: string): string {
+    return url.replace('https://', 'http://');
   }
 }

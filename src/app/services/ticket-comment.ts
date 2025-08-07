@@ -7,7 +7,7 @@ import { TicketComment } from '../models/ticket-comment.model';
   providedIn: 'root'
 })
 export class TicketCommentsService {
-  private apiUrl = 'https://localhost:7108/api/v1/comments';
+  private apiUrl = 'http://localhost:7108/api/v1/comments';
 
   constructor(private http: HttpClient) {}
 
@@ -23,21 +23,33 @@ export class TicketCommentsService {
     return this.http.get<TicketComment[]>(`${this.apiUrl}/ticket/${ticketId}`, { headers });
   }
 
-  addComment(ticketId: number, commentText: string): Observable<TicketComment> {
+  addComment(ticketId: number, commentText: string, imageUrl?: string): Observable<TicketComment> {
     const headers = this.getAuthHeaders();
-    return this.http.post<TicketComment>(
-      this.apiUrl,
-      { ticketId, comment: commentText },
-      { headers }
-    );
+
+    const body: any = {
+      ticketId,
+      comment: commentText
+    };
+    if (imageUrl) {
+      body.imageUrl = imageUrl;
+    }
+
+    return this.http.post<TicketComment>(this.apiUrl, body, { headers });
   }
-  addCommentInternal(ticketId: number, commentText: string): Observable<TicketComment> {
+
+  addCommentInternal(ticketId: number, commentText: string, imageUrl?: string): Observable<TicketComment> {
     const headers = this.getAuthHeaders();
-    return this.http.post<TicketComment>(
-      `${this.apiUrl}/internal`,
-      {ticketId, comment: commentText},
-      {headers}
-    );
+
+    const body: any = {
+      ticketId,
+      comment: commentText
+    };
+    if (imageUrl) {
+      body.imageUrl = imageUrl;
+    }
+
+    return this.http.post<TicketComment>(`${this.apiUrl}/internal`, body, { headers });
   }
+
 
 }

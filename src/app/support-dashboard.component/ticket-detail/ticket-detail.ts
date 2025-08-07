@@ -5,9 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { TicketService } from '../../services/ticket';
 import { TicketCommentsService } from '../../services/ticket-comment';
 import { UserService } from '../../services/user';
+import { ImageService } from '../../services/image';
 import { Ticket } from '../../models/ticket.model';
 import { TicketComment } from '../../models/ticket-comment.model';
 import { firstValueFrom } from 'rxjs';
+import { HttpEventType } from '@angular/common/http';
 
 @Component({
   selector: 'app-support-ticket-detail',
@@ -19,15 +21,17 @@ import { firstValueFrom } from 'rxjs';
 export class SupportTicketDetailComponent implements OnInit {
   ticketId!: number;
   ticket!: Ticket;
-  currentUserId!: number;
   comments: TicketComment[] = [];
   newComment: string = '';
   isInternal: boolean = false;
+
+  currentUserId: number = 0;
   loading: boolean = false;
-  error = '';
+  error: string = '';
 
-  userNames = new Map<number, string>();
+  userNames = new Map<number, string>(); // userId → userName map
 
+  selectedStatus: string = '';
 
   statusDisplayMap: Record<string, string> = {
     Open: 'Açık',
@@ -41,13 +45,18 @@ export class SupportTicketDetailComponent implements OnInit {
     Kapalı: 'Closed',
   };
 
-  selectedStatus: string = '';
+
+  selectedFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  enlargedImageUrl: string | null = null;
+  uploadProgress: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private ticketService: TicketService,
     private commentService: TicketCommentsService,
-    private userService: UserService
+    private userService: UserService,
+    private imageService: ImageService // ImageService eklendi
   ) {}
 
   ngOnInit(): void {
@@ -67,10 +76,9 @@ export class SupportTicketDetailComponent implements OnInit {
       next: (ticket) => {
         this.ticket = ticket;
         this.error = '';
-
         this.selectedStatus = this.statusDisplayMap[ticket.status] || ticket.status;
       },
-      error: () => (this.error = 'Ticket bilgisi yüklenemedi.')
+      error: () => (this.error = 'Ticket bilgisi yüklenemedi.'),
     });
   }
 
@@ -81,7 +89,7 @@ export class SupportTicketDetailComponent implements OnInit {
         this.error = '';
         await this.loadUserNamesForComments(comments);
       },
-      error: () => (this.error = 'Yorumlar yüklenemedi.')
+      error: () => (this.error = 'Yorumlar yüklenemedi.'),
     });
   }
 
@@ -94,6 +102,7 @@ export class SupportTicketDetailComponent implements OnInit {
     );
 
     const users = await Promise.all(userPromises);
+
     users.forEach((user) => {
       if (user) {
         this.userNames.set(user.id, user.name || 'Anonim');
@@ -105,19 +114,61 @@ export class SupportTicketDetailComponent implements OnInit {
     return this.userNames.get(userId) ?? 'Anonim';
   }
 
+  // Dosya seçildiğinde önizleme oluşturur
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl = reader.result as string;
+      };
+      reader.readAsDataURL(this.selectedFile);
+    }
+  }
+
   sendComment(): void {
     if (!this.newComment.trim()) return;
 
     this.loading = true;
+    this.uploadProgress = null;
+
+    if (this.selectedFile) {
+      // Resim varsa önce upload et
+      this.imageService.uploadImage(this.selectedFile).subscribe({
+        next: event => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+          } else if (event.type === HttpEventType.Response) {
+            const imageUrl = event.body?.url;
+            this.submitComment(imageUrl);
+          }
+        },
+        error: () => {
+          this.error = 'Resim yüklenirken hata oluştu.';
+          this.loading = false;
+        }
+      });
+    } else {
+      // Resimsiz yorum gönder
+      this.submitComment(null);
+    }
+  }
+
+  private submitComment(imageUrl: string | null) {
     const serviceCall = this.isInternal
-      ? this.commentService.addCommentInternal(this.ticketId, this.newComment)
-      : this.commentService.addComment(this.ticketId, this.newComment);
+      ? this.commentService.addCommentInternal(this.ticketId, this.newComment, imageUrl ?? undefined)
+      : this.commentService.addComment(this.ticketId, this.newComment, imageUrl ?? undefined);
 
     serviceCall.subscribe({
       next: (comment) => {
         this.comments.push(comment);
         this.newComment = '';
         this.isInternal = false;
+        this.selectedFile = null;
+        this.imagePreviewUrl = null;
+        this.uploadProgress = null;
         this.loading = false;
       },
       error: () => {
@@ -127,7 +178,7 @@ export class SupportTicketDetailComponent implements OnInit {
     });
   }
 
-  changeStatus(): void {
+  changeStatus() {
     if (!this.ticket || this.selectedStatus === this.statusDisplayMap[this.ticket.status]) return;
 
     this.loading = true;
@@ -144,4 +195,16 @@ export class SupportTicketDetailComponent implements OnInit {
       },
     });
   }
+
+  openImageModal(url: string): void {
+    this.enlargedImageUrl = url;
+  }
+
+  closeImageModal(): void {
+    this.enlargedImageUrl = null;
+  }
+  sanitizeImageUrl(url: string): string {
+    return url.replace('https://', 'http://');
+  }
 }
+

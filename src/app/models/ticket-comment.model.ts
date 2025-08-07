@@ -5,4 +5,5 @@ export interface TicketComment {
   createdAt: string;
   userId: number;
   isInternal: boolean;
+  imageUrl: string;
 }
