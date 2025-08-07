@@ -7,7 +7,7 @@ import { TicketComment } from '../models/ticket-comment.model';
   providedIn: 'root'
 })
 export class TicketCommentsService {
-  private apiUrl = 'https://localhost:7108/api/v1/comments';
+  private apiUrl = 'http://192.168.10.87:7108/api/v1/comments';
 
   constructor(private http: HttpClient) {}
 
