@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-unauthorized',
@@ -23,9 +24,16 @@ import { Location } from '@angular/common';
   `
 })
 export class UnauthorizedComponent {
-  constructor(private location: Location) {}
+  constructor(private location: Location , private  router: Router) { }
 
   goBack() {
-    this.location.back();
+    if (window.history.length > 1) {
+      window.history.back();
+      window.history.back();
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
+
+
 }

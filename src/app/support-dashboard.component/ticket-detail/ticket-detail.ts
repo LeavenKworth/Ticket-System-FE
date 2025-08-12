@@ -10,6 +10,7 @@ import { Ticket } from '../../models/ticket.model';
 import { TicketComment } from '../../models/ticket-comment.model';
 import { firstValueFrom } from 'rxjs';
 import { HttpEventType } from '@angular/common/http';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-support-ticket-detail',
@@ -24,6 +25,7 @@ export class SupportTicketDetailComponent implements OnInit {
   comments: TicketComment[] = [];
   newComment: string = '';
   isInternal: boolean = false;
+  errorMessage: string = '';
 
   currentUserId: number = 0;
   loading: boolean = false;
@@ -56,7 +58,8 @@ export class SupportTicketDetailComponent implements OnInit {
     private ticketService: TicketService,
     private commentService: TicketCommentsService,
     private userService: UserService,
-    private imageService: ImageService // ImageService eklendi
+    private imageService: ImageService, // ImageService eklendi
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -78,7 +81,14 @@ export class SupportTicketDetailComponent implements OnInit {
         this.error = '';
         this.selectedStatus = this.statusDisplayMap[ticket.status] || ticket.status;
       },
-      error: () => (this.error = 'Ticket bilgisi yüklenemedi.'),
+      error: (err) => {
+        if (err.status === 401 || err.status === 403) {
+          this.router.navigate(['/unauthorized']);
+        } else {
+          this.errorMessage = 'Ticket verileri alınamadı.';
+        }
+        this.loading = false;
+      }
     });
   }
 

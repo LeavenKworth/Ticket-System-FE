@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { HttpEventType } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ticket-detail',
@@ -46,6 +47,7 @@ export class TicketDetailComponent implements OnInit {
     private commentService: TicketCommentsService,
     private userService: UserService,
     private imageService: ImageService,
+    private router: Router,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -60,11 +62,10 @@ export class TicketDetailComponent implements OnInit {
 
   fetchTicket(): void {
     this.loading = true;
-    this.ticketService.getAllTickets().subscribe({
-      next: (tickets) => {
-        const found = tickets.find(t => t.id === this.ticketId);
-        if (found) {
-          this.ticket = found;
+    this.ticketService.getTicketById(this.ticketId).subscribe({
+      next: (ticket) => {
+        if (ticket) {
+          this.ticket = ticket;
           this.errorMessage = '';
         } else {
           this.errorMessage = 'Ticket bulunamadı';
@@ -72,12 +73,17 @@ export class TicketDetailComponent implements OnInit {
         }
         this.loading = false;
       },
-      error: () => {
-        this.errorMessage = 'Ticket verileri alınamadı.';
+      error: (err) => {
+        if (err.status === 401 || err.status === 403) {
+          this.router.navigate(['/unauthorized']);
+        } else {
+          this.errorMessage = 'Ticket verileri alınamadı.';
+        }
         this.loading = false;
       }
     });
   }
+
 
   fetchComments(): void {
     const role = localStorage.getItem('role') || '';
