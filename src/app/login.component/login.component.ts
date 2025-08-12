@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
   loginForm: FormGroup;
   errorMessage: string = '';
+  showPassword = false;
 
   constructor(
     private authService: AuthService,
@@ -54,5 +55,13 @@ export class LoginComponent {
         console.error(err);
       }
     });
+
+
+    }
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+  goToRegister() {
+    this.router.navigate(['register']);
   }
 }

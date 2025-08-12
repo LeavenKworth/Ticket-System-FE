@@ -3,6 +3,7 @@
   import { SupportDashboardComponent } from './support-dashboard.component/support-dashboard.component';
   import { AdminDashboardComponent } from './admin-dashboard.component/admin-dashboard.component';
   import { LoginComponent } from './login.component/login.component';
+  import {RegisterComponent} from './login.component/register/register';
   import { CreateTicketComponent } from './client-dashboard.component/create-ticket/create-ticket';
   import { clientGuard } from './guards/client-guard';
   import { supportGuard } from './guards/support-guard';
@@ -13,6 +14,7 @@
   import {AdminUsersDetailComponent} from './admin-dashboard.component/admin-users/admin-users-detail/admin-users-detail';
   import {AdminTicketsDetail} from './admin-dashboard.component/admin-tickets/admin-tickets-detail/admin-tickets-detail';
   import {SupportTicketDetailComponent} from './support-dashboard.component/ticket-detail/ticket-detail';
+  import { UnauthorizedComponent} from './ErrorHandler/unauthorized/unauthorized';
 
   export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -26,5 +28,7 @@
     { path: "admin/ticket-detail/:id", component: AdminTicketsDetail, canActivate: [adminGuard] },
     { path: "admin/user-detail/:id", component: AdminUsersDetailComponent, canActivate: [adminGuard] },
     {path: "support/ticket-detail/:id", component: SupportTicketDetailComponent, canActivate: [supportGuard] },
+    {path: "register",component: RegisterComponent },
+    { path: "unauthorized", component: UnauthorizedComponent },
     { path: '', redirectTo: 'login', pathMatch: 'full' },
   ];

@@ -1,40 +1,100 @@
-<div class="login-container">
-  <h2>Giriş Yap</h2>
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
+    <h2 class="text-3xl font-extrabold text-indigo-600 text-center mb-8">Giriş Yap</h2>
 
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input
-        type="email"
-        id="email"
-        formControlName="email"
-        placeholder="Email adresinizi girin"
-        [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-      />
-      <div class="error" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-        Geçerli bir email giriniz.
+      <!-- Email -->
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="Email adresinizi girin"
+          class="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched){
+          <p class="text-red-500 text-sm mt-1">Geçerli bir email giriniz.</p>
+        }
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="password">Şifre</label>
-      <input
-        type="password"
-        id="password"
-        formControlName="password"
-        placeholder="Şifrenizi girin"
-        [class.invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-      />
-      <div class="error" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-        Şifre zorunludur.
+      <!-- Password -->
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+        <div class="relative">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="Şifrenizi girin"
+            class="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          />
+          <button
+            type="button"
+            (click)="togglePasswordVisibility()"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="Şifreyi göster/gizle"
+          >
+            @if (!showPassword) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            }
+
+            @if (showPassword) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.955 9.955 0 012.424-3.279m1.8-1.835A9.953 9.953 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.969 9.969 0 01-1.098 2.203M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+              </svg>
+            }
+          </button>
+        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched){
+          <p class="text-red-500 text-sm mt-1">Şifre zorunludur.</p>
+        }
       </div>
-    </div>
 
-    <button type="submit" [disabled]="loginForm.invalid">Giriş Yap</button>
+      <!-- Error message -->
+      @if (errorMessage){
+        <div class="text-red-600 text-center text-sm mt-2">
+          {{ errorMessage }}
+        </div>
+      }
 
-    <div class="error-message" *ngIf="errorMessage">
-      {{ errorMessage }}
-    </div>
-  </form>
+      <button
+        type="submit"
+        [disabled]="loginForm.invalid"
+        class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition"
+      >
+        Giriş Yap
+      </button>
+
+      <p class="mt-6 text-center text-gray-600 text-sm">
+        Hesabınız yok mu?
+        <a (click)="goToRegister()" class="text-indigo-600 hover:underline cursor-pointer ml-1">Kayıt Ol</a>
+      </p>
+    </form>
+  </div>
 </div>
